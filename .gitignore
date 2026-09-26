@@ -1,0 +1,7 @@
+# ---> PowerShell
+*.backup-*
+# ---> Windows
+Thumbs.db
+Desktop.ini
+# ---> Logs
+*.log

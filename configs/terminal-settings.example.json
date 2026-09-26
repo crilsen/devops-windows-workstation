@@ -1,0 +1,32 @@
+{
+  "$help": "Example Windows Terminal settings produced by devops-windows-workstation. Copy relevant keys into your own settings.json; the Configure-Terminal script patches only what it needs.",
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "copyOnSelect": true,
+  "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+  "profiles": {
+    "defaults": {
+      "font": { "face": "CaskaydiaCove Nerd Font" },
+      "useAcrylic": true,
+      "acrylicOpacity": 0.92,
+      "cursor": { "shape": "bar" }
+    },
+    "list": [
+      {
+        "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+        "name": "PowerShell",
+        "commandline": "pwsh.exe -NoLogo",
+        "startingDirectory": "%USERPROFILE%",
+        "font": { "face": "CaskaydiaCove Nerd Font" },
+        "useAcrylic": true,
+        "acrylicOpacity": 0.92
+      },
+      {
+        "guid": "{07b52e3e-de2c-5db4-bd2d-92d9a123bde6}",
+        "name": "Ubuntu",
+        "source": "Windows.Terminal.Wsl",
+        "startingDirectory": "//wsl$/Ubuntu/home/<user>",
+        "font": { "face": "CaskaydiaCove Nerd Font" }
+      }
+    ]
+  }
+}

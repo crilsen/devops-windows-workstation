@@ -1,0 +1,10 @@
+# Default WSL2 resource limits deployed by Install-WSL.ps1.
+# Copy to %USERPROFILE%\.wslconfig. Tune memory/CPUs to the host.
+[wsl2]
+memory=8GB
+processors=4
+swap=8GB
+localhostForwarding=true
+
+[experimental]
+sparseVhd=true
