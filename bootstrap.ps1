@@ -13,6 +13,10 @@
 .EXAMPLE
     .\bootstrap.ps1 -Minimal
 .EXAMPLE
+    .\bootstrap.ps1 -Cloud Azure,GCP
+.EXAMPLE
+    .\bootstrap.ps1 -Cloud All
+.EXAMPLE
     .\bootstrap.ps1 -WhatIf
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -23,7 +27,9 @@ param(
     [switch]$InstallTools,
     [switch]$ConfigureTerminal,
     [switch]$SkipTools,
-    [switch]$SkipTerminal
+    [switch]$SkipTerminal,
+    [ValidateSet('AWS', 'Azure', 'OCI', 'GCP', 'All')]
+    [string[]]$Cloud = @('AWS')
 )
 
 Set-StrictMode -Version Latest
@@ -62,7 +68,7 @@ try {
 
     if (-not $SkipWSL) {
         Write-Step -Message 'Configuring WSL2 + Ubuntu'
-        & (Join-Path $ScriptRoot 'scripts/Install-WSL.ps1')
+        & (Join-Path $ScriptRoot 'scripts/Install-WSL.ps1') -Cloud $Cloud
         $results.Add([pscustomobject]@{ Component = 'WSL2'; Status = 'OK' })
     }
     else {
@@ -72,7 +78,7 @@ try {
 
     if ($runTools) {
         Write-Step -Message 'Installing / validating DevOps tools'
-        $toolParams = @{}
+        $toolParams = @{ Cloud = $Cloud }
         if ($SkipDocker) { $toolParams['SkipDocker'] = $true }
         if ($Minimal) { $toolParams['Minimal'] = $true }
         & (Join-Path $ScriptRoot 'scripts/Install-DevOpsTools.ps1') @toolParams
@@ -110,7 +116,7 @@ try {
     }
 
     Write-Step -Message 'Validating environment'
-    & (Join-Path $ScriptRoot 'scripts/Test-Environment.ps1')
+    & (Join-Path $ScriptRoot 'scripts/Test-Environment.ps1') -Cloud $Cloud
 }
 catch {
     Write-Error "Bootstrap failed: $($_.Exception.Message)"

@@ -35,6 +35,14 @@ jobs:
         shell: pwsh
         run: Get-Content ./configs/oh-my-posh.json -Raw | ConvertFrom-Json | Out-Null
 
+      - name: Validate Docker settings example JSON
+        shell: pwsh
+        run: Get-Content ./configs/docker-settings.example.json -Raw | ConvertFrom-Json | Out-Null
+
+      - name: Bash syntax check (WSL guest scripts)
+        shell: bash
+        run: bash -n scripts/wsl-setup.sh
+
       - name: Run Pester tests
         shell: pwsh
         run: |

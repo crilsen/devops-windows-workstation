@@ -24,8 +24,8 @@ It is built as a real workstation automation and onboarding flow, not a loose co
 bootstrap.ps1
 ├── scripts/Common.ps1              shared logging, backup, winget helpers
 ├── scripts/Install-Prerequisites.ps1  Windows version, admin, PS7, Terminal
-├── scripts/Install-WSL.ps1           WSL2 + Ubuntu + .wslconfig
-├── scripts/Install-DevOpsTools.ps1   winget-based tool installs
+├── scripts/Install-WSL.ps1           WSL2 + Ubuntu + guest provisioning
+├── scripts/Install-DevOpsTools.ps1   winget-based tool installs (cloud profiles)
 ├── scripts/Configure-PowerShell.ps1  profile + PSReadLine + aliases
 ├── scripts/Configure-OhMyPosh.ps1    prompt theme + Nerd Font
 ├── scripts/Configure-Terminal.ps1    Windows Terminal install + safe settings patch
@@ -57,6 +57,8 @@ Focused runs:
 .\bootstrap.ps1 -SkipDocker
 .\bootstrap.ps1 -SkipWSL
 .\bootstrap.ps1 -Minimal
+.\bootstrap.ps1 -Cloud Azure,GCP
+.\bootstrap.ps1 -Cloud All
 .\bootstrap.ps1 -InstallTools
 .\bootstrap.ps1 -ConfigureTerminal
 .\bootstrap.ps1 -WhatIf
@@ -107,7 +109,9 @@ Restart Windows Terminal to load the new configuration.
 | 7-Zip | winget `7zip.7zip` | |
 | Oh My Posh | winget `JanDeDobbeleer.OhMyPosh` | bundled theme in `configs/` |
 | Nerd Font (Cascadia) | winget `Microsoft.CascadiaCode` | applied to Terminal profiles |
-| Azure CLI | optional | set `INSTALL_AZURE_CLI=1` to include |
+| Azure CLI | winget `Microsoft.AzureCLI` | opt-in via `-Cloud Azure` / `-Cloud All` |
+| OCI CLI | winget `Oracle.OCI-CLI` | opt-in via `-Cloud OCI` / `-Cloud All` |
+| Google Cloud CLI | winget `Google.CloudSDK` | opt-in via `-Cloud GCP` / `-Cloud All` |
 
 Already-installed tools are detected and skipped: `[OK] Git already installed`.
 
@@ -118,6 +122,7 @@ Already-installed tools are detected and skipped: `[OK] Git already installed`.
 | `-SkipWSL` | skip WSL2/Ubuntu setup |
 | `-SkipDocker` | skip Docker Desktop install and configuration |
 | `-Minimal` | core tools only (Git, PS7, Terminal, VS Code, AWS CLI, kubectl) |
+| `-Cloud` | cloud provider CLIs: `AWS` (default), `Azure`, `OCI`, `GCP`, `All`; combinable, e.g. `-Cloud Azure,GCP` |
 | `-InstallTools` | run the tools path only |
 | `-ConfigureTerminal` | run the terminal path only |
 | `-WhatIf` / `-Verbose` | dry run / detailed logging (via `SupportsShouldProcess`) |
@@ -138,6 +143,7 @@ Already-installed tools are detected and skipped: `[OK] Git already installed`.
 │   ├── Install-Prerequisites.ps1
 │   ├── Install-DevOpsTools.ps1
 │   ├── Install-WSL.ps1
+│   ├── wsl-setup.sh
 │   ├── Configure-PowerShell.ps1
 │   ├── Configure-Terminal.ps1
 │   ├── Configure-OhMyPosh.ps1
@@ -174,6 +180,22 @@ Screenshots:
 - `docs/screenshots/bootstrap-run.png` — bootstrap output (placeholder)
 - `docs/screenshots/validation.png` — `Test-Environment` table (placeholder)
 
+## Cloud profiles
+
+One workstation can serve several clouds. AWS is installed by default; the rest are opt-in so a fresh machine stays lean:
+
+```powershell
+.\bootstrap.ps1 -Cloud Azure        # Windows + Ubuntu get Azure CLI
+.\bootstrap.ps1 -Cloud OCI,GCP      # combine profiles
+.\bootstrap.ps1 -Cloud All          # AWS + Azure + OCI + GCP
+```
+
+The same selection applies on both sides: winget packages on Windows (`Microsoft.AzureCLI`, `Oracle.OCI-CLI`, `Google.CloudSDK`) and official installers inside Ubuntu (`scripts/wsl-setup.sh`). Only CLIs are installed — credentials are never created; configure them manually (`aws configure sso`, `az login`, `oci setup config`, `gcloud init`).
+
+## Ubuntu guest provisioning
+
+`Install-WSL.ps1` handles the host side (default version, Ubuntu install, `.wslconfig`) and then runs `scripts/wsl-setup.sh` inside Ubuntu: base packages (git, curl, jq), kubectl, Helm, plus the cloud CLIs from the selected `-Cloud` profile. The script is idempotent and skips gracefully on a fresh Ubuntu until its first-run user setup completes — just finish the Ubuntu prompt and re-run the bootstrap.
+
 ## Docker Desktop
 
 `scripts/Configure-Docker.ps1` patches `%APPDATA%\Docker\settings.json` with a timestamped backup: it enables the WSL2 engine (`wslEngineEnabled`) and ensures Ubuntu stays in `integratedWslDistros`, preserving every other setting. It never fabricates a full settings file — when Docker Desktop has never launched, it skips with a pointer to `configs/docker-settings.example.json`. Restart Docker Desktop to apply. `Test-Environment.ps1` adds a read-only `docker info` check on top of `docker --version`.
@@ -191,6 +213,7 @@ Screenshots:
 | --- | --- |
 | `winget not found` | install App Installer from the Microsoft Store, then re-run |
 | WSL install asks for reboot | reboot, then re-run `.\bootstrap.ps1` (idempotent) |
+| Ubuntu first-run setup pending | finish the Ubuntu user prompt once, then re-run (guest provisioning resumes) |
 | Terminal `settings.json` missing | open Windows Terminal once, then re-run (the Terminal is installed automatically when missing) |
 | Prompt glyphs look broken | verify the Nerd Font step ran and Terminal font is `CaskaydiaCove Nerd Font` |
 | Docker engine not running | launch Docker Desktop; re-run to re-apply WSL2 backend + Ubuntu integration |
@@ -199,16 +222,16 @@ Screenshots:
 
 ## Customization
 
-See [docs/customization.md](docs/customization.md): prompt segments, fonts, `.wslconfig` limits, aliases, Terminal opacity/cursor and Docker Desktop WSL integration.
+See [docs/customization.md](docs/customization.md): prompt segments, fonts, `.wslconfig` limits, aliases, Terminal opacity/cursor, Docker Desktop WSL integration, cloud profiles and Ubuntu guest packages.
 
 ## Roadmap
 
 - Workstation profiles (minimal / standard / full)
 - Chocolatey / Scoop as alternative providers
-- Optional tooling inside WSL guests
+- Terraform / OpenTofu inside WSL guests
 - SSH / GPG setup
 - Dotfiles management
 - Dev Containers support
-- Azure / GCP tooling profiles
+- OCI tenancy profiles and GCP project presets
 - Pester tests and CI lint/test execution
 - Declarative YAML configuration

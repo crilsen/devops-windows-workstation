@@ -25,3 +25,11 @@ Reference only. `Configure-Terminal.ps1` installs Windows Terminal when `wt` is 
 ## Docker Desktop (`configs/docker-settings.example.json`)
 
 Reference subset. `Configure-Docker.ps1` enables the WSL2 engine and adds Ubuntu to `integratedWslDistros` in `%APPDATA%\Docker\settings.json`, keeping every other key untouched. Re-run the script after editing the example to converge. Restart Docker Desktop to apply; run `wsl --shutdown` if the integration does not pick up immediately.
+
+## Cloud profiles (`-Cloud AWS|Azure|OCI|GCP|All`)
+
+Default is AWS only. Combine providers (`-Cloud Azure,GCP`) or take everything (`-Cloud All`). The selection drives winget installs on Windows and `scripts/wsl-setup.sh` arguments in Ubuntu. Validate with `scripts/Test-Environment.ps1 -Cloud <same selection>`.
+
+## Ubuntu guest (`scripts/wsl-setup.sh`)
+
+Runs inside Ubuntu via `wsl -d Ubuntu`. Installs base packages, kubectl (stable binary), Helm (official installer) and the selected cloud CLIs from vendor sources. Add guest packages in the base section following the existing `has_cmd` guard. Terraform/OpenTofu guest installs are intentionally left out for now — tracked in the roadmap.

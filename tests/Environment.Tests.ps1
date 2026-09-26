@@ -32,6 +32,16 @@ Describe 'Repository structure' {
         Join-Path $repoRoot 'configs/.wslconfig' | Should -Exist
     }
 
+    It 'has the Ubuntu guest provisioning script' {
+        Join-Path $repoRoot 'scripts/wsl-setup.sh' | Should -Exist
+    }
+
+    It 'supports cloud provider profiles in the entry point' {
+        $bootstrap = Join-Path $repoRoot 'bootstrap.ps1'
+        Get-Content $bootstrap -Raw | Should -Match "-Cloud"
+        Get-Content $bootstrap -Raw | Should -Match "ValidateSet\('AWS', 'Azure', 'OCI', 'GCP', 'All'\)"
+    }
+
     It 'ships a valid Docker settings example' {
         $example = Join-Path $repoRoot 'configs/docker-settings.example.json'
         { Get-Content $example -Raw | ConvertFrom-Json } | Should -Not -Throw

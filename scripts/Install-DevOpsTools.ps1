@@ -6,7 +6,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [switch]$SkipDocker,
-    [switch]$Minimal
+    [switch]$Minimal,
+    [ValidateSet('AWS', 'Azure', 'OCI', 'GCP', 'All')]
+    [string[]]$Cloud = @('AWS')
 )
 
 Set-StrictMode -Version Latest
@@ -30,6 +32,27 @@ $tools = @(
     @{ WingetId = '7zip.7zip';                  DisplayName = '7-Zip';           TestCommand = '7z' }
 )
 
+# Cloud provider CLIs are opt-in per profile; AWS stays in the default set.
+$wantAll = $Cloud -contains 'All'
+if ($wantAll -or ($Cloud -contains 'Azure') -or ($env:INSTALL_AZURE_CLI -eq '1')) {
+    $tools += @(@{ WingetId = 'Microsoft.AzureCLI'; DisplayName = 'Azure CLI'; TestCommand = 'az' })
+}
+else {
+    Write-Skip -Message 'Azure CLI skipped (add -Cloud Azure or -Cloud All to include it)'
+}
+if ($wantAll -or ($Cloud -contains 'OCI')) {
+    $tools += @(@{ WingetId = 'Oracle.OCI-CLI'; DisplayName = 'OCI CLI'; TestCommand = 'oci' })
+}
+else {
+    Write-Skip -Message 'OCI CLI skipped (add -Cloud OCI or -Cloud All to include it)'
+}
+if ($wantAll -or ($Cloud -contains 'GCP')) {
+    $tools += @(@{ WingetId = 'Google.CloudSDK'; DisplayName = 'Google Cloud CLI'; TestCommand = 'gcloud' })
+}
+else {
+    Write-Skip -Message 'Google Cloud CLI skipped (add -Cloud GCP or -Cloud All to include it)'
+}
+
 if (-not $SkipDocker -and -not $Minimal) {
     $tools += @(@{ WingetId = 'Docker.DockerDesktop'; DisplayName = 'Docker Desktop'; TestCommand = 'docker' })
 }
@@ -41,14 +64,6 @@ if ($Minimal) {
     $minimalNames = @('Git', 'PowerShell 7', 'Windows Terminal', 'Visual Studio Code', 'AWS CLI v2', 'kubectl')
     $tools = $tools | Where-Object { $minimalNames -contains $_.DisplayName }
     Write-Host 'Minimal profile: installing core tools only.' -ForegroundColor Cyan
-}
-
-# Azure CLI stays optional and is installed only on demand.
-if ($env:INSTALL_AZURE_CLI -eq '1') {
-    $tools += @(@{ WingetId = 'Microsoft.AzureCLI'; DisplayName = 'Azure CLI'; TestCommand = 'az' })
-}
-else {
-    Write-Skip -Message 'Azure CLI skipped (set INSTALL_AZURE_CLI=1 to include it)'
 }
 
 foreach ($tool in $tools) {

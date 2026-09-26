@@ -4,7 +4,10 @@
     Validates the workstation and prints a summary table.
 #>
 [CmdletBinding()]
-param()
+param(
+    [ValidateSet('AWS', 'Azure', 'OCI', 'GCP', 'All')]
+    [string[]]$Cloud = @('AWS')
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Continue'
@@ -48,6 +51,17 @@ Add-Row -Component 'WSL' -Command 'wsl' -VersionArgs @('--version')
 Add-Row -Component 'Ubuntu' -Command 'wsl' -VersionArgs @('--list')
 Add-Row -Component 'Git' -Command 'git' -VersionArgs @('--version')
 Add-Row -Component 'AWS CLI' -Command 'aws' -VersionArgs @('--version')
+
+$wantAll = $Cloud -contains 'All'
+if ($wantAll -or ($Cloud -contains 'Azure')) {
+    Add-Row -Component 'Azure CLI' -Command 'az' -VersionArgs @('--version')
+}
+if ($wantAll -or ($Cloud -contains 'OCI')) {
+    Add-Row -Component 'OCI CLI' -Command 'oci' -VersionArgs @('--version')
+}
+if ($wantAll -or ($Cloud -contains 'GCP')) {
+    Add-Row -Component 'Google Cloud CLI' -Command 'gcloud' -VersionArgs @('--version')
+}
 Add-Row -Component 'kubectl' -Command 'kubectl' -VersionArgs @('version', '--client')
 Add-Row -Component 'Helm' -Command 'helm' -VersionArgs @('version', '--short')
 Add-Row -Component 'Terraform' -Command 'terraform' -VersionArgs @('--version')
