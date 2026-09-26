@@ -77,6 +77,16 @@ try {
         if ($Minimal) { $toolParams['Minimal'] = $true }
         & (Join-Path $ScriptRoot 'scripts/Install-DevOpsTools.ps1') @toolParams
         $results.Add([pscustomobject]@{ Component = 'DevOps tools'; Status = 'OK' })
+
+        if (-not $SkipDocker -and -not $Minimal) {
+            Write-Step -Message 'Configuring Docker Desktop (WSL2 backend + Ubuntu integration)'
+            & (Join-Path $ScriptRoot 'scripts/Configure-Docker.ps1')
+            $results.Add([pscustomobject]@{ Component = 'Docker Desktop'; Status = 'OK' })
+        }
+        else {
+            Write-Skip -Message 'Docker configuration disabled (-SkipDocker or -Minimal)'
+            $results.Add([pscustomobject]@{ Component = 'Docker Desktop'; Status = 'SKIP' })
+        }
     }
     else {
         Write-Skip -Message 'DevOps tools step skipped'

@@ -20,4 +20,8 @@ Deployed once to `%USERPROFILE%\.wslconfig`. Tune `memory`, `processors`, `swap`
 
 ## Windows Terminal (`configs/terminal-settings.example.json`)
 
-Reference only. The patch script applies: PowerShell 7 default, `CaskaydiaCove Nerd Font`, acrylic 0.92, bar cursor, `copyOnSelect`. Adjust opacity down (e.g. `0.85`) for more transparency or set `useAcrylic: false` for maximum legibility.
+Reference only. `Configure-Terminal.ps1` installs Windows Terminal when `wt` is missing, then applies: PowerShell 7 default, `CaskaydiaCove Nerd Font`, acrylic 0.92, bar cursor, `copyOnSelect`. Adjust opacity down (e.g. `0.85`) for more transparency or set `useAcrylic: false` for maximum legibility.
+
+## Docker Desktop (`configs/docker-settings.example.json`)
+
+Reference subset. `Configure-Docker.ps1` enables the WSL2 engine and adds Ubuntu to `integratedWslDistros` in `%APPDATA%\Docker\settings.json`, keeping every other key untouched. Re-run the script after editing the example to converge. Restart Docker Desktop to apply; run `wsl --shutdown` if the integration does not pick up immediately.

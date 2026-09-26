@@ -16,6 +16,7 @@ Describe 'Repository structure' {
             'Configure-PowerShell.ps1'
             'Configure-Terminal.ps1'
             'Configure-OhMyPosh.ps1'
+            'Configure-Docker.ps1'
             'Test-Environment.ps1'
         )
         foreach ($name in $expected) {
@@ -27,7 +28,13 @@ Describe 'Repository structure' {
         Join-Path $repoRoot 'configs/oh-my-posh.json' | Should -Exist
         Join-Path $repoRoot 'configs/Microsoft.PowerShell_profile.ps1' | Should -Exist
         Join-Path $repoRoot 'configs/terminal-settings.example.json' | Should -Exist
+        Join-Path $repoRoot 'configs/docker-settings.example.json' | Should -Exist
         Join-Path $repoRoot 'configs/.wslconfig' | Should -Exist
+    }
+
+    It 'ships a valid Docker settings example' {
+        $example = Join-Path $repoRoot 'configs/docker-settings.example.json'
+        { Get-Content $example -Raw | ConvertFrom-Json } | Should -Not -Throw
     }
 
     It 'ships a valid Oh My Posh theme' {

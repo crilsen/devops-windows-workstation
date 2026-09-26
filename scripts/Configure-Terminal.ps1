@@ -15,10 +15,18 @@ $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot 'Common.ps1')
 
-$settingsPath = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
+# Windows Terminal is required for the prompt, font and profiles below.
+# Install it idempotently so this stage works in focused runs too.
+Install-WingetPackage -WingetId 'Microsoft.WindowsTerminal' -DisplayName 'Windows Terminal' -TestCommand 'wt'
 
-if (-not (Test-Path -Path $settingsPath)) {
-    Write-Skip -Message "Windows Terminal settings not found at $settingsPath (open Terminal once, then re-run)"
+$candidatePaths = @(
+    (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'),
+    (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\settings.json')
+)
+$settingsPath = $candidatePaths | Where-Object { Test-Path -Path $_ } | Select-Object -First 1
+
+if (-not $settingsPath) {
+    Write-Skip -Message 'Windows Terminal settings not found (open Terminal once, then re-run)'
     $example = Join-Path (Split-Path $PSScriptRoot -Parent) 'configs/terminal-settings.example.json'
     Write-Host "See example config: $example" -ForegroundColor DarkGray
     return

@@ -28,7 +28,8 @@ bootstrap.ps1
 ├── scripts/Install-DevOpsTools.ps1   winget-based tool installs
 ├── scripts/Configure-PowerShell.ps1  profile + PSReadLine + aliases
 ├── scripts/Configure-OhMyPosh.ps1    prompt theme + Nerd Font
-├── scripts/Configure-Terminal.ps1    safe Windows Terminal patch
+├── scripts/Configure-Terminal.ps1    Windows Terminal install + safe settings patch
+├── scripts/Configure-Docker.ps1      Docker Desktop WSL2 backend + Ubuntu integration
 └── scripts/Test-Environment.ps1      final validation table
 ```
 
@@ -92,9 +93,9 @@ Restart Windows Terminal to load the new configuration.
 | --- | --- | --- |
 | Git | winget `Git.Git` | idempotent check via `git` |
 | Visual Studio Code | winget `Microsoft.VisualStudioCode` | |
-| Windows Terminal | winget `Microsoft.WindowsTerminal` | patched, never replaced |
+| Windows Terminal | winget `Microsoft.WindowsTerminal` | installed when missing; patched, never replaced |
 | PowerShell 7 | winget `Microsoft.PowerShell` | set as default profile |
-| Docker Desktop | winget `Docker.DockerDesktop` | skipped with `-SkipDocker` / `-Minimal` |
+| Docker Desktop | winget `Docker.DockerDesktop` | skipped with `-SkipDocker` / `-Minimal`; WSL2 backend + Ubuntu integration configured |
 | AWS CLI v2 | winget `Amazon.AWSCLI` | version + optional `sts get-caller-identity` |
 | kubectl | winget `Kubernetes.kubectl` | |
 | Helm | winget `Helm.Helm` | |
@@ -115,7 +116,7 @@ Already-installed tools are detected and skipped: `[OK] Git already installed`.
 | Flag | Effect |
 | --- | --- |
 | `-SkipWSL` | skip WSL2/Ubuntu setup |
-| `-SkipDocker` | skip Docker Desktop |
+| `-SkipDocker` | skip Docker Desktop install and configuration |
 | `-Minimal` | core tools only (Git, PS7, Terminal, VS Code, AWS CLI, kubectl) |
 | `-InstallTools` | run the tools path only |
 | `-ConfigureTerminal` | run the terminal path only |
@@ -130,6 +131,7 @@ Already-installed tools are detected and skipped: `[OK] Git already installed`.
 │   ├── Microsoft.PowerShell_profile.ps1
 │   ├── oh-my-posh.json
 │   ├── terminal-settings.example.json
+│   ├── docker-settings.example.json
 │   └── .wslconfig
 ├── scripts/
 │   ├── Common.ps1
@@ -139,6 +141,7 @@ Already-installed tools are detected and skipped: `[OK] Git already installed`.
 │   ├── Configure-PowerShell.ps1
 │   ├── Configure-Terminal.ps1
 │   ├── Configure-OhMyPosh.ps1
+│   ├── Configure-Docker.ps1
 │   └── Test-Environment.ps1
 ├── docs/
 │   ├── architecture.md
@@ -171,12 +174,16 @@ Screenshots:
 - `docs/screenshots/bootstrap-run.png` — bootstrap output (placeholder)
 - `docs/screenshots/validation.png` — `Test-Environment` table (placeholder)
 
+## Docker Desktop
+
+`scripts/Configure-Docker.ps1` patches `%APPDATA%\Docker\settings.json` with a timestamped backup: it enables the WSL2 engine (`wslEngineEnabled`) and ensures Ubuntu stays in `integratedWslDistros`, preserving every other setting. It never fabricates a full settings file — when Docker Desktop has never launched, it skips with a pointer to `configs/docker-settings.example.json`. Restart Docker Desktop to apply. `Test-Environment.ps1` adds a read-only `docker info` check on top of `docker --version`.
+
 ## Security
 
 - Never stores AWS access keys or creates credentials.
 - Only runs `aws --version`, plus read-only `aws sts get-caller-identity` when credentials already exist.
 - No firewall changes, no Defender changes, no global `ExecutionPolicy` relaxation (only `CurrentUser` → `RemoteSigned` when currently `Restricted`/`AllSigned`).
-- Every mutated user file (profile, `.wslconfig`, Terminal `settings.json`, prompt theme) gets a timestamped backup such as `settings.json.backup-20260926-143210`.
+- Every mutated user file (profile, `.wslconfig`, Terminal `settings.json`, Docker `settings.json`, prompt theme) gets a timestamped backup such as `settings.json.backup-20260926-143210`.
 
 ## Troubleshooting
 
@@ -184,13 +191,15 @@ Screenshots:
 | --- | --- |
 | `winget not found` | install App Installer from the Microsoft Store, then re-run |
 | WSL install asks for reboot | reboot, then re-run `.\bootstrap.ps1` (idempotent) |
-| Terminal `settings.json` missing | open Windows Terminal once, then re-run |
+| Terminal `settings.json` missing | open Windows Terminal once, then re-run (the Terminal is installed automatically when missing) |
 | Prompt glyphs look broken | verify the Nerd Font step ran and Terminal font is `CaskaydiaCove Nerd Font` |
+| Docker engine not running | launch Docker Desktop; re-run to re-apply WSL2 backend + Ubuntu integration |
+| Docker `settings.json` missing | launch Docker Desktop once so it generates the file, then re-run |
 | AWS check skipped | expected when no credentials exist; configure via `aws configure sso` or `aws configure` |
 
 ## Customization
 
-See [docs/customization.md](docs/customization.md): prompt segments, fonts, `.wslconfig` limits, aliases and Terminal opacity/cursor.
+See [docs/customization.md](docs/customization.md): prompt segments, fonts, `.wslconfig` limits, aliases, Terminal opacity/cursor and Docker Desktop WSL integration.
 
 ## Roadmap
 

@@ -73,9 +73,24 @@ $rows.Add([pscustomobject]@{ Component = 'Nerd Font'; Status = $fontStatus; Vers
 
 $rows | Format-Table -AutoSize | Out-Host
 
-# Optional AWS identity check: read-only, only when credentials already exist.
-if (Test-CommandAvailable -Name 'aws') {
+# Docker engine check: read-only (docker info), plus WSL backend hint.
+if (Test-CommandAvailable -Name 'docker') {
     try {
+        docker info 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok -Message 'Docker engine running (docker info succeeded)'
+        }
+        else {
+            Write-Warning 'Docker CLI present but the engine is not running (launch Docker Desktop)'
+        }
+    }
+    catch {
+        Write-Verbose "Docker engine check skipped: $($_.Exception.Message)"
+    }
+}
+
+# Optional AWS identity check: read-only, only when credentials already exist.
+if (Test-CommandAvailable -Name 'aws') {    try {
         aws sts get-caller-identity 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Ok -Message 'AWS credentials valid (sts get-caller-identity succeeded)'

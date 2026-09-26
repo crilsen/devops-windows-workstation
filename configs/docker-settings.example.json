@@ -1,0 +1,5 @@
+{
+  "$help": "Reference subset applied by scripts/Configure-Docker.ps1. The script patches only these keys in %APPDATA%/Docker/settings.json and preserves everything else.",
+  "wslEngineEnabled": true,
+  "integratedWslDistros": ["Ubuntu"]
+}
